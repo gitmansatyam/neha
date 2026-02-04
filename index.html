@@ -776,6 +776,7 @@
         const status = document.getElementById("cheeku-status");
         const audio = document.getElementById("song");
         if (!toggle || !wrap || !video || !miniControl || !status) return;
+        const isIPhone = /iPhone/i.test(navigator.userAgent);
 
         const setStatus = (text) => {
           status.textContent = text;
@@ -815,7 +816,7 @@
         video.controls = false;
         video.muted = false;
         video.removeAttribute("muted");
-        video.loop = true;
+        video.loop = !isIPhone;
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
 

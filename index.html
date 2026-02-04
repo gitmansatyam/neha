@@ -797,6 +797,21 @@
           }
         };
 
+        let songWatchdog = null;
+        const startSongWatchdog = () => {
+          if (songWatchdog || !audio) return;
+          songWatchdog = setInterval(() => {
+            const shouldKeepSong = wrap.classList.contains("show") && !video.paused;
+            if (shouldKeepSong) keepSongAlive();
+          }, 350);
+        };
+
+        const stopSongWatchdog = () => {
+          if (!songWatchdog) return;
+          clearInterval(songWatchdog);
+          songWatchdog = null;
+        };
+
         video.controls = false;
         video.muted = false;
         video.removeAttribute("muted");
@@ -811,13 +826,21 @@
         video.addEventListener("play", () => {
           syncMiniControl();
           setMiniVisible(true);
+          startSongWatchdog();
           keepSongAlive();
         });
 
-        video.addEventListener("pause", syncMiniControl);
+        video.addEventListener("pause", () => {
+          syncMiniControl();
+          stopSongWatchdog();
+        });
 
         video.addEventListener("error", () => {
           setStatus("Video format unsupported on this iPhone. Please use H.264/AAC MP4 (cheeku-ios.mp4).");
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") keepSongAlive();
         });
 
         miniControl.addEventListener("click", (event) => {
@@ -840,6 +863,7 @@
           try {
             await video.play();
             keepSongAlive();
+            startSongWatchdog();
           } catch (err) {
             setMiniVisible(true);
             setStatus("Couldn't autoplay here. Tap the play button on the video.");

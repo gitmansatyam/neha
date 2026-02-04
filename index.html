@@ -241,6 +241,12 @@
         display: block;
       }
 
+      .cheeku-status {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
       .audio-pill {
         position: fixed;
         inset: 0;
@@ -556,9 +562,13 @@
             <p data-copy="cheeku_text"></p>
             <div class="cheeku-action">
               <button class="callout-btn" id="cheeku-toggle" type="button">cheeku is calling you</button>
-              <small style="color: var(--muted)">Video: <code>cheeku.mp4</code></small>
             </div>
-            <video class="cheeku-video" id="cheeku-video" src="cheeku.mp4" playsinline></video>
+            <video class="cheeku-video" id="cheeku-video" playsinline controls preload="metadata">
+              <source src="cheeku-ios.mp4" type="video/mp4" />
+              <source src="cheeku.mp4" type="video/mp4" />
+              Your browser does not support this video.
+            </video>
+            <p class="cheeku-status" id="cheeku-status"></p>
           </div>
         </section>
 
@@ -574,7 +584,7 @@
             <h2 data-copy="final_question"></h2>
             <div class="final-buttons">
               <button class="btn" data-final="yes">Yes ❤️</button>
-              <button class="btn secondary" data-final="yes">Obviously yes 😤💘</button>
+              <button class="btn secondary" data-final="yes">Obviously Yes 😤💘</button>
             </div>
             <div class="final-message" id="final-message"></div>
           </div>
@@ -598,8 +608,8 @@
         chosen_text: "You’re family-oriented in a way that feels rare and real. That’s when I knew you’re the one I want to build everything with.",
         cheeku_title: "Cheeku moment",
         cheeku_text: "A tiny surprise for you — just because your smile is my favorite.",
-        promise_title: "A promise to you from my side",
-        promise_line: "You’ll get all the happiness of the world — and everyday whatever happens, I only choose you.",
+        promise_title: "A promise, always",
+        promise_line: "She’ll get all the happiness of the world — and everyday whatever happens, I only choose her.",
         final_question: "Will you be my Valentine, Baccha?",
         final_yes_message: "I love you the most, Baccha. Always.",
       };
@@ -718,16 +728,32 @@
       const initCheeku = () => {
         const toggle = document.getElementById("cheeku-toggle");
         const video = document.getElementById("cheeku-video");
-        if (!toggle || !video) return;
+        const status = document.getElementById("cheeku-status");
+        if (!toggle || !video || !status) return;
+
+        const setStatus = (text) => {
+          status.textContent = text;
+        };
+
+        video.addEventListener("loadeddata", () => {
+          setStatus("");
+        });
+
+        video.addEventListener("error", () => {
+          setStatus("Video format unsupported on this iPhone. Please use H.264/AAC MP4 (cheeku-ios.mp4).");
+        });
+
         let timer;
         toggle.addEventListener("click", async () => {
           clearTimeout(timer);
+          setStatus("");
           video.classList.add("show");
+          video.controls = true;
           video.currentTime = 0;
           try {
             await video.play();
           } catch (err) {
-            // If playback is blocked, user can press play on the video.
+            setStatus("Couldn't autoplay here. Tap the play button on the video.");
           }
           timer = setTimeout(() => {
             video.pause();

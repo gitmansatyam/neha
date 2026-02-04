@@ -801,7 +801,7 @@
         const startSongWatchdog = () => {
           if (songWatchdog || !audio) return;
           songWatchdog = setInterval(() => {
-            const shouldKeepSong = wrap.classList.contains("show") && !video.paused;
+            const shouldKeepSong = wrap.classList.contains("show");
             if (shouldKeepSong) keepSongAlive();
           }, 350);
         };
@@ -832,7 +832,6 @@
 
         video.addEventListener("pause", () => {
           syncMiniControl();
-          stopSongWatchdog();
         });
 
         video.addEventListener("error", () => {

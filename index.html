@@ -229,16 +229,48 @@
         background: rgba(231, 166, 178, 0.14);
       }
 
-      .cheeku-video {
+      .cheeku-video-wrap {
         width: min(420px, 100%);
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+        position: relative;
         display: none;
       }
 
-      .cheeku-video.show {
+      .cheeku-video-wrap.show {
         display: block;
+      }
+
+      .cheeku-video {
+        width: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+        display: block;
+      }
+
+      .cheeku-mini-control {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(11, 11, 13, 0.65);
+        color: var(--ivory);
+        font-size: 1rem;
+        line-height: 1;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+
+      .cheeku-mini-control.show {
+        opacity: 1;
+        pointer-events: auto;
       }
 
       .cheeku-status {
@@ -563,11 +595,14 @@
             <div class="cheeku-action">
               <button class="callout-btn" id="cheeku-toggle" type="button">cheeku is calling you</button>
             </div>
-            <video class="cheeku-video" id="cheeku-video" playsinline controls preload="metadata">
-              <source src="cheeku-ios.mp4" type="video/mp4" />
-              <source src="cheeku.mp4" type="video/mp4" />
-              Your browser does not support this video.
-            </video>
+            <div class="cheeku-video-wrap" id="cheeku-video-wrap">
+              <video class="cheeku-video" id="cheeku-video" playsinline webkit-playsinline muted preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback">
+                <source src="cheeku-ios.mp4" type="video/mp4" />
+                <source src="cheeku.mp4" type="video/mp4" />
+                Your browser does not support this video.
+              </video>
+              <button class="cheeku-mini-control" id="cheeku-mini-control" type="button" aria-label="Pause video">⏸</button>
+            </div>
             <p class="cheeku-status" id="cheeku-status"></p>
           </div>
         </section>
@@ -727,37 +762,85 @@
 
       const initCheeku = () => {
         const toggle = document.getElementById("cheeku-toggle");
+        const wrap = document.getElementById("cheeku-video-wrap");
         const video = document.getElementById("cheeku-video");
+        const miniControl = document.getElementById("cheeku-mini-control");
         const status = document.getElementById("cheeku-status");
-        if (!toggle || !video || !status) return;
+        const audio = document.getElementById("song");
+        if (!toggle || !wrap || !video || !miniControl || !status) return;
 
         const setStatus = (text) => {
           status.textContent = text;
         };
 
+        const setMiniVisible = (visible) => {
+          miniControl.classList.toggle("show", visible);
+        };
+
+        const syncMiniControl = () => {
+          const paused = video.paused;
+          miniControl.textContent = paused ? "▶" : "⏸";
+          miniControl.setAttribute("aria-label", paused ? "Play video" : "Pause video");
+        };
+
+        const keepSongAlive = () => {
+          if (audio && audio.paused) {
+            audio.play().catch(() => {});
+          }
+        };
+
+        video.controls = false;
+        video.muted = true;
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "");
+
         video.addEventListener("loadeddata", () => {
           setStatus("");
         });
 
+        video.addEventListener("play", () => {
+          syncMiniControl();
+          setMiniVisible(true);
+          keepSongAlive();
+        });
+
+        video.addEventListener("pause", syncMiniControl);
+
         video.addEventListener("error", () => {
           setStatus("Video format unsupported on this iPhone. Please use H.264/AAC MP4 (cheeku-ios.mp4).");
+        });
+
+        miniControl.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (video.paused) {
+            video.play().catch(() => {
+              setStatus("Tap the video button again to play.");
+            });
+          } else {
+            video.pause();
+          }
         });
 
         let timer;
         toggle.addEventListener("click", async () => {
           clearTimeout(timer);
           setStatus("");
-          video.classList.add("show");
-          video.controls = true;
+          wrap.classList.add("show");
+          setMiniVisible(false);
           video.currentTime = 0;
+          syncMiniControl();
           try {
             await video.play();
+            keepSongAlive();
           } catch (err) {
+            setMiniVisible(true);
             setStatus("Couldn't autoplay here. Tap the play button on the video.");
           }
           timer = setTimeout(() => {
             video.pause();
-            video.classList.remove("show");
+            wrap.classList.remove("show");
+            setMiniVisible(false);
           }, 12000);
         });
       };

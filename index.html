@@ -310,7 +310,7 @@
         display: block;
         margin-top: 12px;
         color: var(--muted);
-        font-size: 0.9rem;
+        font-size: 3.6rem;
       }
 
       .audio-pill.show {
@@ -542,8 +542,8 @@
     <div class="floaters" aria-hidden="true"></div>
     <audio id="song" preload="auto" autoplay loop src="ve-haniya.mp3"></audio>
     <button class="audio-pill" id="audio-pill" type="button">
-      <span class="audio-pill-inner">Tap to start music</span>
-      <span class="audio-pill-sub">For Baccha’s Valentine surprise</span>
+      <span class="audio-pill-inner">Tap to reveal surprise</span>
+      <span class="audio-pill-sub">Only for you</span>
     </button>
 
     <main id="page">
@@ -596,7 +596,15 @@
               <button class="callout-btn" id="cheeku-toggle" type="button">cheeku is calling you</button>
             </div>
             <div class="cheeku-video-wrap" id="cheeku-video-wrap">
-              <video class="cheeku-video" id="cheeku-video" playsinline webkit-playsinline muted preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback">
+              <video
+                class="cheeku-video"
+                id="cheeku-video"
+                playsinline
+                webkit-playsinline
+                preload="metadata"
+                disablepictureinpicture
+                controlslist="nodownload noplaybackrate noremoteplayback"
+              >
                 <source src="cheeku-ios.mp4" type="video/mp4" />
                 <source src="cheeku.mp4" type="video/mp4" />
                 Your browser does not support this video.
@@ -790,8 +798,9 @@
         };
 
         video.controls = false;
-        video.muted = true;
-        video.setAttribute("muted", "");
+        video.muted = false;
+        video.removeAttribute("muted");
+        video.loop = true;
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
 
@@ -822,9 +831,7 @@
           }
         });
 
-        let timer;
         toggle.addEventListener("click", async () => {
-          clearTimeout(timer);
           setStatus("");
           wrap.classList.add("show");
           setMiniVisible(false);
@@ -837,11 +844,6 @@
             setMiniVisible(true);
             setStatus("Couldn't autoplay here. Tap the play button on the video.");
           }
-          timer = setTimeout(() => {
-            video.pause();
-            wrap.classList.remove("show");
-            setMiniVisible(false);
-          }, 12000);
         });
       };
 
